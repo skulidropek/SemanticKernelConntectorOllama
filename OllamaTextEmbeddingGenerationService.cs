@@ -34,7 +34,7 @@ namespace SemanticKernelConntectorOllama
                 var requestBody = new { model = _model, prompt = text };
                 var content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
 
-                var response = await httpClient.PostAsync(_apiUrl, content, cancellationToken);
+                var response = await httpClient.PostAsync(_apiUrl + "/api/embeddings", content, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
