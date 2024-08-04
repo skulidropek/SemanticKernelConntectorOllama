@@ -10,10 +10,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using SemanticKernelConntectorOllama.Models;
 using System.Runtime.CompilerServices;
+using Microsoft.SemanticKernel.TextGeneration;
+using Microsoft.SemanticKernel;
 
 namespace SemanticKernelConntectorOllama
 {
-    public class OllamaTextGenerationService : ITextGenerator
+    public class OllamaTextGenerationService : ITextGenerator, ITextGenerationService
     {
         private readonly string _apiUrl;
         private readonly string _model;
@@ -29,6 +31,8 @@ namespace SemanticKernelConntectorOllama
         }
 
         public int MaxTokenTotal => _maxTokens;
+
+        public IReadOnlyDictionary<string, object?> Attributes => throw new NotImplementedException();
 
         public async IAsyncEnumerable<string> GenerateTextAsync(string prompt, TextGenerationOptions options, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
@@ -85,14 +89,40 @@ namespace SemanticKernelConntectorOllama
 
         public int CountTokens(string text)
         {
-            // Implement your logic for counting tokens in the text
+            // Простая реализация для подсчета количества токенов
             return text.Split(' ').Length;
         }
 
         public IReadOnlyList<string> GetTokens(string text)
         {
-            // Implement your logic for tokenizing the text
+            // Простая реализация для токенизации текста
             return text.Split(' ');
+        }
+
+        public async Task<IReadOnlyList<TextContent>> GetTextContentsAsync(string prompt, PromptExecutionSettings? executionSettings = null, Kernel? kernel = null, CancellationToken cancellationToken = default)
+        {
+            _logger.LogTrace("Getting text contents with model '{0}'", _model);
+
+            var texts = new List<TextContent>();
+
+            await foreach (var generatedText in GenerateTextAsync(prompt, new TextGenerationOptions { MaxTokens = _maxTokens }, cancellationToken))
+            {
+                // Предположим, что у TextContent есть конструктор, который принимает строку
+                texts.Add(new TextContent(generatedText, _model));
+            }
+
+            return texts;
+        }
+
+        public async IAsyncEnumerable<StreamingTextContent> GetStreamingTextContentsAsync(string prompt, PromptExecutionSettings? executionSettings = null, Kernel? kernel = null, CancellationToken cancellationToken = default)
+        {
+            _logger.LogTrace("Getting streaming text contents with model '{0}'", _model);
+
+            await foreach (var generatedText in GenerateTextAsync(prompt, new TextGenerationOptions { MaxTokens = _maxTokens }, cancellationToken))
+            {
+                // Предположим, что у StreamingTextContent есть конструктор, который принимает строку
+                yield return new StreamingTextContent(generatedText, 0, _model, null, null, null);
+            }
         }
     }
 }

@@ -36,6 +36,8 @@ namespace SemanticKernelConntectorOllama
 
             builder.Services.AddSingleton<ITextEmbeddingGenerationService>(provider =>
                 new OllamaTextEmbeddingGenerationService(config));
+            builder.Services.AddSingleton<ITextEmbeddingGenerator>(provider =>
+                new OllamaTextEmbeddingGenerationService(config));
 
             return builder;
         }
@@ -90,7 +92,36 @@ namespace SemanticKernelConntectorOllama
                 return new OllamaTextGenerationService(apiUrl, model, loggerFactory);
             });
 
+            services.AddSingleton<ITextGenerationService>(provider =>
+            {
+                // Create and configure the OllamaTextGenerationService instance
+                var loggerFactory = provider.GetService<ILoggerFactory>();
+                return new OllamaTextGenerationService(apiUrl, model, loggerFactory);
+            });
+
             return services;
+        }
+        public static IKernelBuilder AddOllamaTextGenerationService(
+            this IKernelBuilder builder,
+            string apiUrl,
+            string model)
+        {
+            // Register the OllamaTextGenerationService in the DI container
+            builder.Services.AddSingleton<ITextGenerator>(provider =>
+            {
+                // Create and configure the OllamaTextGenerationService instance
+                var loggerFactory = provider.GetService<ILoggerFactory>();
+                return new OllamaTextGenerationService(apiUrl, model, loggerFactory);
+            });
+
+            builder.Services.AddSingleton<ITextGenerationService>(provider =>
+            {
+                // Create and configure the OllamaTextGenerationService instance
+                var loggerFactory = provider.GetService<ILoggerFactory>();
+                return new OllamaTextGenerationService(apiUrl, model, loggerFactory);
+            });
+
+            return builder;
         }
     }
 }
